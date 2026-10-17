@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-svc
+  namespace: feridsaad
+spec:
+  type: ClusterIP
+  selector:
+    app: api
+    tier: backend
+  ports:
+    - port: 80          # port du Service
+      targetPort: 9898  # port du conteneur podinfo
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-svc
+  namespace: feridsaad
+spec:
+  type: ClusterIP
+  selector:
+    app: frontend
+    tier: web
+  ports:
+    - port: 80
+      targetPort: 80

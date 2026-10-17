@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: feridsaad
+  labels:
+    app: api
+    tier: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api
+      tier: backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0   # jamais moins de 3 Pods prêts pendant la mise à jour
+      maxSurge: 1         # un Pod supplémentaire à la fois
+  template:
+    metadata:
+      labels:
+        app: api
+        tier: backend
+    spec:
+      containers:
+        - name: podinfo
+          image: ghcr.io/stefanprodan/podinfo:6.5.4   # version explicite (E2)
+          ports:
+            - containerPort: 9898
+          readinessProbe:       # un Pod ne reçoit du trafic que s'il est prêt
+            httpGet:
+              path: /readyz
+              port: 9898
+            initialDelaySeconds: 2
+            periodSeconds: 3
