@@ -1,0 +1,12 @@
+# ============================================================
+# Étape 0 – Namespace dédié au binôme (Exigence E1)
+# Isoler les ressources du projet dans un espace de noms
+# propre évite les conflits de noms avec d'autres équipes.
+# ============================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: feridsaad
+  labels:
+    project: mini-projet-1
+    team: feridsaad

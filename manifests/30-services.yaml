@@ -1,0 +1,49 @@
+# ============================================================
+# Étape 3 – Services ClusterIP (Exigences E5, E6)
+#
+# Deux Services internes uniquement (ClusterIP) :
+#   api-svc      → sélectionne les Pods app=api, tier=backend
+#   frontend-svc → sélectionne les Pods app=frontend, tier=web
+#
+# Nom DNS complet de l'API (E6) :
+#   api-svc.feridsaad.svc.cluster.local
+# Le frontend peut aussi utiliser simplement : api-svc
+# (dans le même namespace, le suffixe est résolu automatiquement).
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-svc
+  namespace: feridsaad
+  labels:
+    app: api
+    tier: backend
+spec:
+  type: ClusterIP          # Accessible uniquement depuis l'intérieur du cluster (E5)
+  selector:
+    app: api               # Sélectionne les Pods portant ces labels
+    tier: backend
+  ports:
+    - name: http
+      port: 80             # Port exposé par le Service (utilisé par Ingress et les clients internes)
+      targetPort: 9898     # Port réel du conteneur podinfo
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-svc
+  namespace: feridsaad
+  labels:
+    app: frontend
+    tier: web
+spec:
+  type: ClusterIP          # Accessible uniquement depuis l'intérieur du cluster (E5)
+  selector:
+    app: frontend          # Sélectionne les Pods portant ces labels
+    tier: web
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP

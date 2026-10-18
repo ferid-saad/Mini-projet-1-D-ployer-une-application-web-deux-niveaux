@@ -1,0 +1,130 @@
+# ============================================================
+# Étape 2 – Deployment du Frontend (Exigences E3, E4)
+#
+# Image   : nginx:alpine (écoute sur le port 80)
+# Réplicas: 2
+# Labels  : app=frontend, tier=web  ← DIFFÉRENTS de l'API (E4)
+#
+# La ConfigMap injectée configure nginx pour proxifier
+# l'API via son nom DNS interne (E6).
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-nginx-conf
+  namespace: feridsaad
+  labels:
+    app: frontend
+    tier: web
+data:
+  # Configuration nginx : sert une page HTML et proxy vers l'API
+  nginx.conf: |
+    server {
+        listen 80;
+        server_name _;
+
+        # Page d'accueil statique
+        location / {
+            root   /usr/share/nginx/html;
+            index  index.html;
+        }
+
+        # Proxy transparent vers l'API (communication interne via DNS, E6)
+        location /api/ {
+            proxy_pass http://api-svc.feridsaad.svc.cluster.local/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+    }
+
+  # Page HTML d'accueil du frontend
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Mini-Projet K8s – Binôme Ferid &amp; Saad</title>
+      <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #0a0e27; color: #e0e6ff; }
+        h1   { font-size: 2.5rem; color: #7c9dff; }
+        p    { font-size: 1.2rem; }
+        .badge { display: inline-block; background: #1e2a5e; border: 1px solid #3b5bdb;
+                 border-radius: 8px; padding: 6px 18px; margin: 6px; font-size: 0.95rem; }
+        a    { color: #90b4ff; }
+      </style>
+    </head>
+    <body>
+      <h1>🚀 Mini-Projet Kubernetes</h1>
+      <p>Frontend déployé avec <strong>nginx:alpine</strong> (2 réplicas)</p>
+      <p>
+        <span class="badge">Namespace : feridsaad</span>
+        <span class="badge">Binôme : Ferid &amp; Saad</span>
+      </p>
+      <p>API disponible via proxy : <a href="/api/">/api/</a></p>
+      <p>Accès direct API : <a href="http://api.k3s.local">api.k3s.local</a></p>
+    </body>
+    </html>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: feridsaad
+  labels:
+    app: frontend
+    tier: web
+    project: mini-projet-1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+      tier: web
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0         # Évite de créer un Pod supplémentaire (nœud VirtualBox limité en RAM)
+  template:
+    metadata:
+      labels:
+        app: frontend
+        tier: web
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.27-alpine   # Version explicite recommandée (pas latest)
+          ports:
+            - containerPort: 80
+              name: http
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: nginx.conf
+            - name: nginx-config
+              mountPath: /usr/share/nginx/html/index.html
+              subPath: index.html
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "20m"
+              memory: "16Mi"
+            limits:
+              cpu: "100m"
+              memory: "32Mi"   # Limite basse pour éviter les évictions sur VirtualBox
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: frontend-nginx-conf

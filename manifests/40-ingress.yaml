@@ -1,0 +1,48 @@
+# ============================================================
+# Étape 4 – Ingress Traefik (Exigence E7)
+#
+# Un seul objet Ingress expose deux applications via des
+# règles par hôte (virtual hosting) :
+#   web.k3s.local → frontend-svc:80
+#   api.k3s.local → api-svc:80
+#
+# Avantage vs NodePort : un seul point d'entrée (port 80/443),
+# routage basé sur le nom d'hôte, pas besoin d'un port dédié
+# par application, TLS gérable centralement.
+# ============================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web-ingress
+  namespace: feridsaad
+  labels:
+    project: mini-projet-1
+  annotations:
+    # Traefik est le contrôleur Ingress fourni par k3s par défaut
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  ingressClassName: traefik
+  rules:
+    # Règle 1 : le frontend
+    - host: web.k3s.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-svc
+                port:
+                  number: 80
+
+    # Règle 2 : l'API
+    - host: api.k3s.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api-svc
+                port:
+                  number: 80
