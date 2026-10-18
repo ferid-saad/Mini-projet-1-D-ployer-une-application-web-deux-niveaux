@@ -37,7 +37,7 @@ spec:
     spec:
       containers:
         - name: podinfo
-          image: ghcr.io/stefanprodan/podinfo:6.6.0   # Version mise à jour (E9 – rolling update)
+          image: ghcr.io/stefanprodan/podinfo:6.5.4   # Version de référence (E2) — mise à jour vers 6.6.0 démontrée (E9)
           ports:
             - containerPort: 9898
               name: http
