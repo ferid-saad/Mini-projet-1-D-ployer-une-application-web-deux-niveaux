@@ -1,6 +1,6 @@
 # Compte-rendu — Mini-Projet 1 : Application web à deux niveaux sur Kubernetes
 
-**Binôme :** Ferid & Saad | **Namespace :** `feridsaad` | **Date :** Octobre 2026
+**Namespace :** `feridsaad` | **Date :** Octobre 2026
 
 ---
 

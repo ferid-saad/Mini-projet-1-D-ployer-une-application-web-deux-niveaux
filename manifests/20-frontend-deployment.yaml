@@ -59,7 +59,7 @@ data:
       <p>Frontend déployé avec <strong>nginx:alpine</strong> (2 réplicas)</p>
       <p>
         <span class="badge">Namespace : feridsaad</span>
-        <span class="badge">Binôme : Ferid &amp; Saad</span>
+        <span class="badge">Realisé par:Ferid Saad</span>
       </p>
       <p>API disponible via proxy : <a href="/api/">/api/</a></p>
       <p>Accès direct API : <a href="http://api.k3s.local">api.k3s.local</a></p>

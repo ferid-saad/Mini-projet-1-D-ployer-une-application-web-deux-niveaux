@@ -1,6 +1,6 @@
 # Mini-Projet 1 — Application web à deux niveaux sur k3s
 
-> **Binôme :** Ferid & Saad — Namespace `feridsaad`
+> Namespace `feridsaad`
 
 ## Architecture déployée
 
@@ -32,19 +32,19 @@ manifests/
 
 ## Déploiement complet (ordre à respecter)
 
-### 1. Cloner le dépôt et se positionner
-
-```bash
-git clone <URL_DU_DEPOT>
-cd Mini-projet-1
-```
-
-### 2. Créer le namespace et le définir par défaut
+### 1. Créer le namespace et le définir par défaut
 
 ```bash
 kubectl apply -f manifests/00-namespace.yaml
 kubectl config set-context --current --namespace=feridsaad
 ```
+Pour afficher le namspace courant:
+````
+kubectl config view --minify --output 'jsonpath={..namespace}'
+````
+Capture
+
+![namespace](images/ns.png)
 
 ### 3. Appliquer tous les manifestes
 
@@ -57,23 +57,26 @@ kubectl apply -f manifests/
 ```bash
 # Voir tous les objets dans le namespace
 kubectl get all,ingress,configmap
+```
+Capture
 
+![get-all](images/get-all.png)
+
+```
 # Vérifier les Pods et leur répartition sur les nœuds
 kubectl get pods -o wide
+```
+Capture
 
+![get-pods](images/get-pods.png)
+
+```
 # Vérifier les Endpoints (preuves que les Services pointent bien vers les Pods)
 kubectl get endpoints
 ```
+Capture
 
-Sortie attendue :
-```
-NAME                           READY   STATUS    RESTARTS   AGE   NODE
-pod/api-xxx-yyy               1/1     Running   0          30s   node1
-pod/api-xxx-zzz               1/1     Running   0          30s   node2
-pod/api-xxx-www               1/1     Running   0          30s   node1
-pod/frontend-xxx-aaa          1/1     Running   0          28s   node2
-pod/frontend-xxx-bbb          1/1     Running   0          28s   node1
-```
+![Endpoints](images/endpoints.png)
 
 ---
 
@@ -82,8 +85,11 @@ pod/frontend-xxx-bbb          1/1     Running   0          28s   node1
 Ajouter dans `C:\Windows\System32\drivers\etc\hosts` (en tant qu'administrateur) :
 
 ```
-<IP_DU_NOEUD_K3S>  web.k3s.local  api.k3s.local
+192.168.56.10  web.k3s.local  api.k3s.local
 ```
+capture
+
+![hosts](images/hosts.png)
 
 > Trouver l'IP du nœud : `kubectl get nodes -o wide`
 
@@ -92,14 +98,23 @@ Tester avec curl :
 ```powershell
 # API (renvoie du JSON avec la version)
 curl.exe -s http://api.k3s.local | ConvertFrom-Json
-
+```
+![Curl-api](images/curl-api.png)
+```
 # Frontend
 curl.exe http://web.k3s.local
+```
+capture
+![Curl-web](images/curl-web.png)
+```
+
 
 # Tester avec l'en-tête Host (sans modifier hosts)
-curl.exe -H "Host: api.k3s.local" http://<IP_DU_NOEUD>
-curl.exe -H "Host: web.k3s.local" http://<IP_DU_NOEUD>
+curl.exe -H "Host: api.k3s.local" http://192.168.56.10
+curl.exe -H "Host: web.k3s.local" http://192.168.56.10
 ```
+Capture
+![sans-hosts](images/sans-hosts.png)
 
 ---
 
@@ -114,7 +129,8 @@ wget -qO- http://api-svc/
 # ou avec le nom complet :
 wget -qO- http://api-svc.feridsaad.svc.cluster.local/
 ```
-
+Capture
+![com-pod-dns](images/com-pod-dns.png)
 ---
 
 ## Mise à jour sans coupure — Rolling Update (E9)
@@ -138,6 +154,11 @@ kubectl apply -f manifests/10-api-deployment.yaml
 kubectl rollout status deployment/api   # Suivre la progression
 kubectl get replicasets                 # Voir les deux ReplicaSets coexister
 ```
+Capture
+![Rollout](images/rollout.png)
+
+Rollout-terminé
+![Rollout-terminé](images/rollout-terminé.png)
 
 ### Rollback (retour à la version précédente)
 
@@ -146,7 +167,9 @@ kubectl rollout undo deployment/api
 kubectl rollout status deployment/api
 kubectl get replicasets
 ```
+Capture
 
+![Rollback](images/rollback.png)
 ---
 
 ## Diagnostic de panne (E10)
