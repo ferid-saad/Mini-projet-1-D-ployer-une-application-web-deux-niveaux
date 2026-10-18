@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rapport TP Kubernetes – Mini-Projet 1</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    :root {
+      --primary: #3b5bdb;
+      --primary-light: #e7f0ff;
+      --secondary: #7c3aed;
+      --success: #059669;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --dark: #0f172a;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --code-bg: #0f172a;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    /* ── PRINT BUTTON ── */
+    .print-bar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: var(--primary);
+      padding: 10px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 2px 12px rgba(59,91,219,.3);
+    }
+    .print-bar span { color: #fff; font-weight: 600; font-size: 13px; }
+    .btn-pdf {
+      background: #fff; color: var(--primary);
+      border: none; border-radius: 8px;
+      padding: 8px 22px; font-weight: 700; font-size: 13px;
+      cursor: pointer; display: flex; align-items: center; gap: 8px;
+      transition: transform .15s;
+    }
+    .btn-pdf:hover { transform: scale(1.04); }
+
+    /* ── LAYOUT ── */
+    .container { max-width: 960px; margin: 64px auto 60px; padding: 0 24px; }
+
+    /* ── COVER ── */
+    .cover {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #312e81 100%);
+      border-radius: 20px;
+      padding: 56px 48px;
+      margin-bottom: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    .cover::before {
+      content: '';
+      position: absolute; top: -60px; right: -60px;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(124,58,237,.4) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    .cover-badge {
+      display: inline-block;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 20px;
+      padding: 4px 16px;
+      font-size: 12px; color: #93c5fd; font-weight: 500;
+      margin-bottom: 16px; letter-spacing: .5px;
+    }
+    .cover h1 {
+      font-size: 2.4rem; font-weight: 700;
+      color: #fff; line-height: 1.2; margin-bottom: 12px;
+    }
+    .cover h1 span { color: #60a5fa; }
+    .cover p { color: #94a3b8; font-size: 15px; max-width: 580px; }
+    .cover-meta {
+      display: flex; gap: 24px; margin-top: 28px; flex-wrap: wrap;
+    }
+    .cover-meta-item {
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 10px;
+      padding: 10px 18px;
+    }
+    .cover-meta-item .label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; }
+    .cover-meta-item .value { font-size: 14px; color: #fff; font-weight: 600; }
+
+    /* ── SECTION ── */
+    .section { margin-bottom: 40px; }
+    .section-title {
+      font-size: 1.4rem; font-weight: 700;
+      color: var(--dark);
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--primary);
+      margin-bottom: 24px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-title .icon {
+      width: 36px; height: 36px;
+      background: var(--primary-light);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+
+    /* ── STEP CARD ── */
+    .step-card {
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      margin-bottom: 24px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,.05);
+    }
+    .step-header {
+      padding: 16px 24px;
+      display: flex; align-items: center; gap: 14px;
+    }
+    .step-header.blue   { background: linear-gradient(90deg, #eff6ff, #fff); border-left: 4px solid #3b82f6; }
+    .step-header.purple { background: linear-gradient(90deg, #f5f3ff, #fff); border-left: 4px solid #7c3aed; }
+    .step-header.green  { background: linear-gradient(90deg, #f0fdf4, #fff); border-left: 4px solid #059669; }
+    .step-header.orange { background: linear-gradient(90deg, #fff7ed, #fff); border-left: 4px solid #f97316; }
+    .step-header.red    { background: linear-gradient(90deg, #fef2f2, #fff); border-left: 4px solid #dc2626; }
+    .step-header.teal   { background: linear-gradient(90deg, #f0fdfa, #fff); border-left: 4px solid #0d9488; }
+    .step-header.pink   { background: linear-gradient(90deg, #fdf2f8, #fff); border-left: 4px solid #db2777; }
+
+    .step-number {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      opacity: .6;
+    }
+    .step-title { font-size: 1rem; font-weight: 700; color: var(--dark); }
+    .step-body { padding: 20px 24px; }
+
+    /* ── CONCEPT BOX ── */
+    .concept {
+      background: var(--primary-light);
+      border-left: 4px solid var(--primary);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin: 14px 0;
+    }
+    .concept strong { color: var(--primary); font-size: 12px; text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: 4px; }
+
+    .alert {
+      border-radius: 8px; padding: 12px 16px; margin: 12px 0;
+      display: flex; gap: 10px; align-items: flex-start; font-size: 13px;
+    }
+    .alert.info    { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+    .alert.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #065f46; }
+    .alert.warning { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+    .alert.danger  { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+
+    /* ── CODE ── */
+    pre {
+      background: var(--code-bg);
+      border-radius: 10px;
+      padding: 16px 20px;
+      overflow-x: auto;
+      margin: 12px 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+    code { color: #e2e8f0; }
+    .kw  { color: #60a5fa; } /* blue – keywords */
+    .str { color: #86efac; } /* green – strings/values */
+    .cm  { color: #64748b; } /* gray – comments */
+    .ok  { color: #4ade80; } /* bright green – success */
+    .er  { color: #f87171; } /* red – error */
+    .hl  { color: #fbbf24; } /* yellow – highlight */
+    .pu  { color: #c084fc; } /* purple */
+
+    /* ── ARCH DIAGRAM ── */
+    .arch-diagram {
+      background: #0f172a;
+      border-radius: 14px;
+      padding: 28px;
+      margin: 16px 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+    .arch-layer {
+      display: flex; align-items: center; justify-content: center;
+      margin: 6px 0;
+    }
+    .arch-box {
+      border-radius: 10px; padding: 10px 20px;
+      text-align: center; font-size: 12px; font-weight: 600;
+      min-width: 180px;
+    }
+    .arch-box.user    { background: #1e293b; border: 1px solid #334155; color: #94a3b8; }
+    .arch-box.ingress { background: #2e1065; border: 1px solid #7c3aed; color: #d8b4fe; }
+    .arch-box.svc     { background: #1e3a8a; border: 1px solid #3b5bdb; color: #93c5fd; }
+    .arch-box.deploy  { background: #064e3b; border: 1px solid #059669; color: #6ee7b7; }
+    .arch-arrow { color: #475569; text-align: center; margin: 2px 0; font-size: 14px; }
+    .arch-split { display: flex; gap: 60px; justify-content: center; align-items: flex-start; }
+    .arch-col   { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .arch-dns-arrow {
+      text-align: center; color: #f97316; font-size: 11px;
+      border-top: 1px dashed #f97316; padding-top: 4px; margin: 0 20px;
+    }
+    .arch-ns {
+      border: 1px dashed #334155; border-radius: 14px;
+      padding: 20px 32px; margin: 8px 0;
+    }
+    .arch-ns-label { color: #475569; font-size: 11px; text-align: right; }
+
+    /* ── TABLE ── */
+    table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13px; }
+    th { background: var(--primary); color: #fff; padding: 10px 14px; text-align: left; font-weight: 600; }
+    td { padding: 9px 14px; border-bottom: 1px solid var(--border); }
+    tr:nth-child(even) td { background: #f8fafc; }
+    tr:hover td { background: var(--primary-light); }
+
+    /* ── BADGE ── */
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: 2px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+    }
+    .badge.ok  { background: #dcfce7; color: #166534; }
+    .badge.req { background: #dbeafe; color: #1e40af; }
+
+    /* ── GRID ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 14px 0; }
+    @media(max-width:640px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    .mini-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px;
+    }
+    .mini-card h4 { font-size: 13px; font-weight: 700; margin-bottom: 6px; color: var(--dark); }
+    .mini-card p  { font-size: 12px; color: var(--muted); }
+
+    /* ── RESULT ROW ── */
+    .result-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+    }
+    .result-row:last-child { border-bottom: none; }
+    .result-num { font-weight: 700; color: var(--primary); font-size: 13px; min-width: 28px; }
+    .result-text { flex: 1; font-size: 13px; }
+    .result-cmd  { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+
+    /* ── TIMELINE ── */
+    .timeline { position: relative; padding-left: 28px; }
+    .timeline::before {
+      content: ''; position: absolute; left: 8px; top: 0; bottom: 0;
+      width: 2px; background: var(--border);
+    }
+    .tl-item { position: relative; margin-bottom: 18px; }
+    .tl-dot {
+      position: absolute; left: -24px; top: 4px;
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--primary); border: 2px solid #fff;
+      box-shadow: 0 0 0 2px var(--primary);
+    }
+    .tl-item h4 { font-size: 13px; font-weight: 700; color: var(--dark); }
+    .tl-item p  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* ── FOOTER ── */
+    .footer {
+      text-align: center; padding: 32px 0;
+      border-top: 1px solid var(--border);
+      color: var(--muted); font-size: 12px; margin-top: 40px;
+    }
+
+    /* ── PRINT ── */
+    @media print {
+      .print-bar { display: none; }
+      .container { margin-top: 0; }
+      body { background: #fff; }
+      .cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .step-card, .arch-diagram, pre { break-inside: avoid; }
+      h2, h3 { break-after: avoid; }
+      @page { margin: 20mm 15mm; size: A4; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- PRINT BAR -->
+<div class="print-bar">
+  <span>📄 Rapport TP Kubernetes — Mini-Projet 1</span>
+  <button class="btn-pdf" onclick="window.print()">
+    ⬇ Télécharger en PDF
+  </button>
+</div>
+
+<div class="container">
+
+  <!-- COVER -->
+  <div class="cover">
+    <div class="cover-badge">DevOps 2027 · Kubernetes</div>
+    <h1>Mini-Projet 1<br><span>Application web à deux niveaux</span><br>sur Kubernetes (k3s)</h1>
+    <p>Déploiement déclaratif d'une architecture frontend / API, exposition via Ingress, mise à jour sans coupure et diagnostic de panne.</p>
+    <div class="cover-meta">
+      <div class="cover-meta-item">
+        <div class="label">Binôme</div>
+        <div class="value">Ferid &amp; Saad</div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="label">Namespace</div>
+        <div class="value">feridsaad</div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="label">Cluster</div>
+        <div class="value">k3s · 192.168.56.10</div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="label">Date</div>
+        <div class="value">Octobre 2026</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       1. ARCHITECTURE
+  ═══════════════════════════════════════════ -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">🏗</span> 1. Architecture déployée</h2>
+
+    <div class="arch-diagram">
+      <div style="color:#60a5fa;font-size:11px;text-align:center;margin-bottom:16px;letter-spacing:1px;text-transform:uppercase;">Architecture – Namespace feridsaad</div>
+
+      <div class="arch-layer">
+        <div class="arch-box user">👤 Utilisateur<br><small style="color:#64748b">navigateur / curl</small></div>
+      </div>
+      <div class="arch-arrow">↓ HTTP port 80</div>
+      <div class="arch-layer">
+        <div class="arch-box ingress">🔀 Ingress Traefik<br><small>web.k3s.local → frontend-svc<br>api.k3s.local &nbsp;→ api-svc</small><br><small style="color:#9f7aea">192.168.56.10</small></div>
+      </div>
+
+      <div class="arch-ns">
+        <div class="arch-ns-label">Namespace: feridsaad</div>
+        <div class="arch-split" style="margin-top:12px;">
+          <div class="arch-col">
+            <div class="arch-arrow">↓</div>
+            <div class="arch-box svc">🔷 Service<br>frontend-svc<br><small>ClusterIP 80→80</small></div>
+            <div class="arch-arrow">↓</div>
+            <div class="arch-box deploy">📦 Deployment frontend<br><small>2 réplicas · nginx:1.27-alpine<br>tier: web</small></div>
+          </div>
+          <div class="arch-col" style="justify-content:center;padding-top:60px;">
+            <div style="color:#f97316;font-size:11px;text-align:center;">DNS interne<br>http://api-svc<br>─────────→</div>
+          </div>
+          <div class="arch-col">
+            <div class="arch-arrow">↓</div>
+            <div class="arch-box svc">🔷 Service<br>api-svc<br><small>ClusterIP 80→9898</small></div>
+            <div class="arch-arrow">↓</div>
+            <div class="arch-box deploy">📦 Deployment api<br><small>3 réplicas · podinfo:6.5.4<br>tier: backend</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="mini-card">
+        <h4>🗂 Structure du dépôt Git</h4>
+        <p><code>manifests/00-namespace.yaml</code><br>
+        <code>manifests/10-api-deployment.yaml</code><br>
+        <code>manifests/20-frontend-deployment.yaml</code><br>
+        <code>manifests/30-services.yaml</code><br>
+        <code>manifests/40-ingress.yaml</code></p>
+      </div>
+      <div class="mini-card">
+        <h4>🖼 Images utilisées</h4>
+        <p><strong>API :</strong> <code>ghcr.io/stefanprodan/podinfo:6.5.4</code><br>Port 9898 · Répond en JSON avec sa version<br><br>
+        <strong>Frontend :</strong> <code>nginx:1.27-alpine</code><br>Port 80 · Proxy vers l'API</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       2. CONCEPTS CLÉS
+  ═══════════════════════════════════════════ -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">📚</span> 2. Concepts Kubernetes expliqués</h2>
+
+    <div class="step-card">
+      <div class="step-header blue"><div><div class="step-number">Concept 1</div><div class="step-title">Namespace — L'espace de travail isolé</div></div></div>
+      <div class="step-body">
+        <p>Un <strong>Namespace</strong> est une partition virtuelle du cluster. Il permet à plusieurs équipes de coexister sans interférence.</p>
+        <div class="concept"><strong>Pourquoi l'utiliser ?</strong>Évite les conflits de noms · Applique des quotas de ressources · Facilite le contrôle des accès (RBAC) · Permet de supprimer toutes les ressources d'un projet en une commande.</div>
+        <pre><code><span class="kw">apiVersion:</span> <span class="str">v1</span>
+<span class="kw">kind:</span> <span class="str">Namespace</span>
+<span class="kw">metadata:</span>
+  <span class="kw">name:</span> <span class="str">feridsaad</span>   <span class="cm"># Notre espace de travail dédié</span></code></pre>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header purple"><div><div class="step-number">Concept 2</div><div class="step-title">Deployment — Le gestionnaire de Pods</div></div></div>
+      <div class="step-body">
+        <p>Un <strong>Deployment</strong> déclare l'état souhaité : quelle image, combien de réplicas, comment faire les mises à jour. Kubernetes s'assure en permanence que cet état est respecté.</p>
+        <div class="grid-2">
+          <div class="mini-card">
+            <h4>Labels (app + tier)</h4>
+            <p>Étiquettes clé-valeur attachées aux Pods. Les Services les utilisent pour savoir vers quels Pods envoyer le trafic. <strong>Ils doivent être uniques</strong> entre Deployments.</p>
+          </div>
+          <div class="mini-card">
+            <h4>Réplicas</h4>
+            <p>Nombre de Pods identiques à maintenir. Si un Pod tombe, le Deployment en recrée un automatiquement. API = 3 réplicas, Frontend = 2 réplicas.</p>
+          </div>
+        </div>
+        <pre><code><span class="kw">selector:</span>
+  <span class="kw">matchLabels:</span>
+    <span class="kw">app:</span> <span class="str">api</span>       <span class="cm"># Le Deployment ne gère QUE les Pods portant ces labels</span>
+    <span class="kw">tier:</span> <span class="str">backend</span>  <span class="cm"># Différent du frontend (app: frontend, tier: web)</span></code></pre>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header green"><div><div class="step-number">Concept 3</div><div class="step-title">Service ClusterIP — Le routeur interne</div></div></div>
+      <div class="step-body">
+        <p>Un <strong>Service</strong> de type <code>ClusterIP</code> attribue une IP virtuelle stable au groupe de Pods. Les Pods peuvent apparaître/disparaître, l'IP du Service reste la même.</p>
+        <div class="concept"><strong>Comment ça marche ?</strong>Le Service sélectionne les Pods via leurs labels. Il maintient une liste d'<strong>Endpoints</strong> (IPs des Pods sains). Kube-proxy distribue le trafic entre ces Pods (load balancing round-robin).</div>
+        <pre><code><span class="cm"># api-svc — port 80 du Service redirige vers le port 9898 des Pods</span>
+<span class="kw">spec:</span>
+  <span class="kw">type:</span> <span class="str">ClusterIP</span>
+  <span class="kw">selector:</span>
+    <span class="kw">app:</span> <span class="str">api</span>        <span class="cm"># Sélectionne les Pods avec ce label</span>
+  <span class="kw">ports:</span>
+    - <span class="kw">port:</span> <span class="str">80</span>       <span class="cm"># Port côté clients</span>
+      <span class="kw">targetPort:</span> <span class="str">9898</span>  <span class="cm"># Port réel du conteneur podinfo</span></code></pre>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header orange"><div><div class="step-number">Concept 4</div><div class="step-title">DNS interne — Communiquer sans IP</div></div></div>
+      <div class="step-body">
+        <p><strong>CoreDNS</strong> est le serveur DNS interne de Kubernetes. Il crée automatiquement un enregistrement DNS pour chaque Service.</p>
+        <div class="concept"><strong>Nom DNS complet d'un Service :</strong><br><code>&lt;nom-service&gt;.&lt;namespace&gt;.svc.cluster.local</code><br>→ <code>api-svc.feridsaad.svc.cluster.local</code><br><br>Depuis le même namespace, <code>api-svc</code> suffit.</div>
+        <pre><code><span class="cm"># Depuis un Pod du frontend, appeler l'API par son nom DNS :</span>
+$ kubectl exec deploy/frontend -n feridsaad -- wget -qO- <span class="str">http://api-svc/</span>
+{
+  <span class="str">"hostname"</span>: <span class="str">"api-6cfc44d4d5-h7q4x"</span>,
+  <span class="str">"version"</span>: <span class="ok">"6.5.4"</span>,
+  <span class="str">"message"</span>: <span class="str">"greetings from podinfo v6.5.4"</span>
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header purple"><div><div class="step-number">Concept 5</div><div class="step-title">Ingress — Le point d'entrée unique</div></div></div>
+      <div class="step-body">
+        <p>Un <strong>Ingress</strong> expose plusieurs Services sous un seul port (80/443) avec du routage par nom d'hôte (virtual hosting). Le <strong>contrôleur Ingress</strong> (ici Traefik, fourni par k3s) traduit ces règles.</p>
+        <table>
+          <tr><th>Critère</th><th>NodePort</th><th>Ingress</th></tr>
+          <tr><td>Port</td><td>Un port 30000-32767 par app</td><td>Port 80 unique</td></tr>
+          <tr><td>URL</td><td><code>http://IP:31234</code></td><td><code>http://api.k3s.local</code></td></tr>
+          <tr><td>TLS</td><td>À gérer par app</td><td>Centralisé</td></tr>
+          <tr><td>Routage</td><td>Par port uniquement</td><td>Par hôte ET par chemin</td></tr>
+        </table>
+        <pre><code><span class="kw">rules:</span>
+  - <span class="kw">host:</span> <span class="str">web.k3s.local</span>   <span class="cm"># → frontend-svc:80</span>
+  - <span class="kw">host:</span> <span class="str">api.k3s.local</span>   <span class="cm"># → api-svc:80</span></code></pre>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header teal"><div><div class="step-number">Concept 6</div><div class="step-title">Rolling Update — Mise à jour sans coupure</div></div></div>
+      <div class="step-body">
+        <p>Le <strong>Rolling Update</strong> remplace les Pods progressivement, un par un, sans jamais supprimer tous les anciens avant que les nouveaux soient prêts.</p>
+        <div class="concept"><strong>Les deux paramètres clés :</strong><br>
+        • <code>maxUnavailable: 0</code> → Jamais moins de 3 Pods disponibles pendant la mise à jour<br>
+        • <code>maxSurge: 1</code> → Au maximum 1 Pod supplémentaire créé temporairement<br><br>
+        + <code>readinessProbe</code> → Un Pod ne reçoit du trafic <em>que</em> lorsqu'il répond à <code>/readyz</code></div>
+        <pre><code><span class="cm"># Pendant la mise à jour 6.5.4 → 6.6.0 :</span>
+Req  1 → version: <span class="str">6.5.4</span>  ✓  <span class="cm"># anciens Pods actifs</span>
+Req  2 → version: <span class="str">6.5.4</span>  ✓
+Req  3 → version: <span class="ok">6.6.0</span>  ✓  <span class="cm"># premier nouveau Pod actif</span>
+Req  5 → version: <span class="str">6.5.4</span>  ✓  <span class="cm"># mix des deux versions = zéro coupure</span>
+Req 17 → version: <span class="ok">6.6.0</span>  ✓  <span class="cm"># bascule finale</span>
+Req 20 → version: <span class="ok">6.6.0</span>  ✓</code></pre>
+        <div class="alert success">✅ Après la mise à jour, l'<strong>ancien ReplicaSet</strong> est conservé à 0 réplica dans l'historique — permet le rollback instantané.</div>
+        <pre><code><span class="cm"># Rollback vers la version précédente :</span>
+$ kubectl rollout undo deployment/api -n feridsaad
+<span class="ok">deployment.apps/api rolled back</span>
+$ kubectl rollout status deployment/api -n feridsaad
+<span class="ok">deployment "api" successfully rolled out</span></code></pre>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header red"><div><div class="step-number">Concept 7</div><div class="step-title">Diagnostic de panne — Méthode d'investigation</div></div></div>
+      <div class="step-body">
+        <div class="timeline">
+          <div class="tl-item"><div class="tl-dot"></div><h4>1. Vue d'ensemble</h4><p><code>kubectl get pods -n feridsaad</code> → Voir les Pods en erreur (Evicted, CrashLoopBackOff, ImagePullBackOff…)</p></div>
+          <div class="tl-item"><div class="tl-dot"></div><h4>2. Détail du Pod suspect</h4><p><code>kubectl describe pod &lt;nom&gt;</code> → Lire la section <strong>Events</strong> en bas (cause de l'échec)</p></div>
+          <div class="tl-item"><div class="tl-dot"></div><h4>3. Logs du conteneur</h4><p><code>kubectl logs &lt;pod&gt;</code> et <code>--previous</code> si le Pod a redémarré</p></div>
+          <div class="tl-item"><div class="tl-dot"></div><h4>4. Endpoints du Service</h4><p><code>kubectl get endpoints api-svc</code> → Si <code>&lt;none&gt;</code>, le Service ne voit aucun Pod → problème de label ou de santé</p></div>
+          <div class="tl-item"><div class="tl-dot"></div><h4>5. Corriger et vérifier</h4><p>Modifier le manifeste → <code>kubectl apply -f</code> → <code>kubectl rollout status</code></p></div>
+        </div>
+        <div class="alert warning">⚠️ <strong>Incident observé :</strong> Pods <code>Evicted</code> lors du rolling update sur VirtualBox. Cause : pression mémoire (faible RAM de la VM). Correction : <code>maxSurge: 0</code> et limits mémoire réduites à 32Mi.</div>
+        <pre><code><span class="cm"># Nettoyage des Pods morts :</span>
+$ kubectl delete pods --field-selector=status.phase=Failed -n feridsaad
+<span class="ok">pod "api-5fd8c99f6b-k2k9r" deleted</span>
+<span class="ok">pod "api-5fd8c99f6b-r6kfc" deleted</span>
+<span class="ok">pod "api-5fd8c99f6b-vmnjl" deleted</span></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       3. ÉTAPES DÉPLOIEMENT
+  ═══════════════════════════════════════════ -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">🚀</span> 3. Étapes de déploiement</h2>
+
+    <div class="step-card">
+      <div class="step-header blue"><div><div class="step-number">Étape 0 — 15 min</div><div class="step-title">Préparer le terrain</div></div></div>
+      <div class="step-body">
+        <pre><code><span class="cm"># 1. Créer le namespace</span>
+$ kubectl apply -f manifests/00-namespace.yaml
+<span class="ok">namespace/feridsaad created</span>
+
+<span class="cm"># 2. Définir ce namespace comme contexte par défaut</span>
+$ kubectl config set-context --current --namespace=feridsaad
+
+<span class="cm"># Vérification</span>
+$ kubectl get namespace feridsaad
+<span class="hl">NAME        STATUS   AGE</span>
+feridsaad   Active   5s</code></pre>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header purple"><div><div class="step-number">Étape 1+2 — 50 min</div><div class="step-title">Déployer l'API (3 réplicas) et le Frontend (2 réplicas)</div></div></div>
+      <div class="step-body">
+        <pre><code>$ kubectl apply -f manifests/10-api-deployment.yaml
+$ kubectl apply -f manifests/20-frontend-deployment.yaml
+$ kubectl get pods -o wide
+
+<span class="hl">NAME                     READY   STATUS    NODE</span>
+api-6cfc44d4d5-jvcc8     <span class="ok">1/1</span>     Running   node-1
+api-6cfc44d4d5-ksqwr     <span class="ok">1/1</span>     Running   node-2
+api-6cfc44d4d5-vvbnl     <span class="ok">1/1</span>     Running   node-1
+frontend-59744fc9df-5gq  <span class="ok">1/1</span>     Running   node-2
+frontend-59744fc9df-hqc  <span class="ok">1/1</span>     Running   node-1</code></pre>
+        <div class="alert info">📌 Le <strong>Scheduler</strong> répartit les Pods sur les nœuds disponibles pour la haute disponibilité.</div>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header green"><div><div class="step-number">Étape 3 — 30 min</div><div class="step-title">Services ClusterIP + Test DNS interne</div></div></div>
+      <div class="step-body">
+        <pre><code>$ kubectl apply -f manifests/30-services.yaml
+$ kubectl get endpoints
+<span class="hl">NAME           ENDPOINTS</span>
+api-svc        <span class="ok">10.42.0.213:9898,10.42.1.146:9898,10.42.1.149:9898</span>
+frontend-svc   <span class="ok">10.42.1.147:80,10.42.1.148:80</span>
+
+<span class="cm"># Test communication interne (E6) :</span>
+$ kubectl exec deploy/frontend -- wget -qO- <span class="str">http://api-svc/</span>
+{ <span class="str">"version"</span>: <span class="ok">"6.5.4"</span>, <span class="str">"hostname"</span>: <span class="str">"api-6cfc44d4d5-h7q4x"</span> }</code></pre>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header orange"><div><div class="step-number">Étape 4 — 30 min</div><div class="step-title">Ingress Traefik — Accès depuis l'extérieur</div></div></div>
+      <div class="step-body">
+        <pre><code>$ kubectl apply -f manifests/40-ingress.yaml
+$ kubectl get ingress
+<span class="hl">NAME          HOSTS                         ADDRESS</span>
+web-ingress   web.k3s.local,api.k3s.local   <span class="ok">192.168.56.10</span>
+
+<span class="cm"># Test depuis Windows :</span>
+$ curl.exe -H <span class="str">"Host: api.k3s.local"</span> http://192.168.56.10/version
+{ <span class="str">"version"</span>: <span class="ok">"6.5.4"</span> }</code></pre>
+        <div class="alert info">💡 Sur Windows : ajouter <code>192.168.56.10  web.k3s.local  api.k3s.local</code> dans <code>C:\Windows\System32\drivers\etc\hosts</code> (en tant qu'administrateur).</div>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header teal"><div><div class="step-number">Étape 5 — 25 min</div><div class="step-title">Rolling Update 6.5.4 → 6.6.0 + Rollback</div></div></div>
+      <div class="step-body">
+        <pre><code><span class="cm"># Modifier le tag dans 10-api-deployment.yaml puis :</span>
+$ kubectl apply -f manifests/10-api-deployment.yaml
+$ kubectl rollout status deployment/api
+Waiting for deployment: 1 out of 3 new replicas have been updated...
+Waiting for deployment: 2 out of 3 new replicas have been updated...
+Waiting for deployment: 1 old replicas are pending termination...
+<span class="ok">deployment "api" successfully rolled out</span>
+
+<span class="cm"># Historique des révisions (3 ReplicaSets conservés) :</span>
+$ kubectl get replicasets
+<span class="hl">NAME                DESIRED  CURRENT  READY</span>
+api-5fd8c99f6b      <span class="ok">3</span>        <span class="ok">3</span>        <span class="ok">3</span>    <span class="cm">← NOUVEAU v6.6.0</span>
+api-6cfc44d4d5      <span class="er">0</span>        0        0    <span class="cm">← ANCIEN v6.5.4 (pour rollback)</span>
+
+<span class="cm"># Rollback :</span>
+$ kubectl rollout undo deployment/api
+<span class="ok">deployment.apps/api rolled back</span></code></pre>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header red"><div><div class="step-number">Étape 6 — 25 min</div><div class="step-title">Incident & Diagnostic</div></div></div>
+      <div class="step-body">
+        <pre><code><span class="cm"># Symptôme observé :</span>
+$ kubectl get pods
+api-5fd8c99f6b-k2k9r   <span class="er">0/1  Evicted</span>   0
+api-5fd8c99f6b-vmnjl   <span class="er">0/1  Error</span>     0
+
+<span class="cm"># Diagnostic — describe node :</span>
+Events: Warning  Evicted  <span class="er">The node was low on resource: memory</span>
+
+<span class="cm"># Correction :</span>
+$ kubectl delete pods --field-selector=status.phase=Failed -n feridsaad
+<span class="cm"># + réduire maxSurge à 0 dans le manifeste</span>
+$ kubectl apply -f manifests/10-api-deployment.yaml
+<span class="ok">deployment.apps/api configured</span></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       4. TABLEAU DES EXIGENCES
+  ═══════════════════════════════════════════ -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">✅</span> 4. Validation des exigences (E1–E10)</h2>
+    <table>
+      <tr><th>N°</th><th>Exigence</th><th>Fichier</th><th>Preuve</th></tr>
+      <tr><td><span class="badge req">E1</span></td><td>Namespace dédié <code>feridsaad</code></td><td><code>00-namespace.yaml</code></td><td><span class="badge ok">✓ Active</span></td></tr>
+      <tr><td><span class="badge req">E2</span></td><td>API 3 réplicas, image versionnée <code>6.5.4</code></td><td><code>10-api-deployment.yaml</code></td><td><span class="badge ok">✓ 3/3 Running</span></td></tr>
+      <tr><td><span class="badge req">E3</span></td><td>Frontend 2 réplicas</td><td><code>20-frontend-deployment.yaml</code></td><td><span class="badge ok">✓ 2/2 Running</span></td></tr>
+      <tr><td><span class="badge req">E4</span></td><td>Labels cohérents <code>app</code> + <code>tier</code></td><td>Les deux Deployments</td><td><span class="badge ok">✓ api/backend ≠ frontend/web</span></td></tr>
+      <tr><td><span class="badge req">E5</span></td><td>Services type ClusterIP</td><td><code>30-services.yaml</code></td><td><span class="badge ok">✓ api-svc + frontend-svc</span></td></tr>
+      <tr><td><span class="badge req">E6</span></td><td>DNS interne frontend → API</td><td>ConfigMap nginx + <code>api-svc</code></td><td><span class="badge ok">✓ wget http://api-svc/ → JSON</span></td></tr>
+      <tr><td><span class="badge req">E7</span></td><td>Ingress Traefik deux hôtes</td><td><code>40-ingress.yaml</code></td><td><span class="badge ok">✓ 192.168.56.10</span></td></tr>
+      <tr><td><span class="badge req">E8</span></td><td>Tout déclaratif, versionné Git</td><td>Dépôt GitHub</td><td><span class="badge ok">✓ 3 commits poussés</span></td></tr>
+      <tr><td><span class="badge req">E9</span></td><td>Rolling update sans coupure</td><td><code>10-api-deployment.yaml</code></td><td><span class="badge ok">✓ 20 req · transition visible</span></td></tr>
+      <tr><td><span class="badge req">E10</span></td><td>Diagnostic documenté</td><td>Ce rapport</td><td><span class="badge ok">✓ Evictions → corrigé</span></td></tr>
+    </table>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       5. RÉPONSES AUX QUESTIONS
+  ═══════════════════════════════════════════ -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">💬</span> 5. Réponses aux questions pédagogiques</h2>
+
+    <div class="step-card">
+      <div class="step-header blue"><div><div class="step-number">Q0</div><div class="step-title">Pourquoi isoler un projet dans un namespace ?</div></div></div>
+      <div class="step-body">
+        <p>Le namespace crée un espace de noms virtuel isolé. Avantages : pas de conflit de noms entre équipes, quotas de ressources applicables, droits RBAC par namespace, et nettoyage simplifié (<code>kubectl delete namespace feridsaad</code> supprime tout).</p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header purple"><div><div class="step-number">Q1</div><div class="step-title">Qui décide sur quel nœud placer les Pods ?</div></div></div>
+      <div class="step-body">
+        <p>Le <strong>Scheduler Kubernetes</strong> (<code>kube-scheduler</code>) prend cette décision automatiquement en filtrant (ressources disponibles, taints) puis en scorant les nœuds (meilleure distribution, affinité). Il tend à répartir les Pods pour maximiser la disponibilité.</p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header green"><div><div class="step-number">Q2</div><div class="step-title">Que se passe-t-il si deux Deployments ont les mêmes labels ?</div></div></div>
+      <div class="step-body">
+        <p>Le Service sélectionnerait les Pods des deux Deployments et enverrait du trafic au mauvais conteneur (nginx recevrait des requêtes destinées à podinfo). Les readinessProbes échoueraient et les Deployments se disputeraient la propriété des Pods → comportement imprévisible.</p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header orange"><div><div class="step-number">Q3</div><div class="step-title">Nom DNS complet + utilité de get endpoints ?</div></div></div>
+      <div class="step-body">
+        <p><strong>Nom DNS :</strong> <code>api-svc.feridsaad.svc.cluster.local</code> (dans le même namespace : <code>api-svc</code> suffit).</p>
+        <p><strong>get endpoints :</strong> Liste les IPs:ports des Pods réellement sélectionnés. Si <code>&lt;none&gt;</code>, le sélecteur du Service ne correspond à aucun Pod → diagnostic immédiat d'un problème de label.</p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header teal"><div><div class="step-number">Q4</div><div class="step-title">Pourquoi Ingress plutôt que NodePort ?</div></div></div>
+      <div class="step-body">
+        <p>L'Ingress offre un <strong>point d'entrée unique</strong> (port 80) avec routage par nom d'hôte, TLS centralisé et URL lisibles (<code>api.k3s.local</code>). NodePort expose un port aléatoire (30000–32767) par application, difficile à maintenir et peu sécurisé.</p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header pink"><div><div class="step-number">Q5</div><div class="step-title">Combien de ReplicaSets après la mise à jour ? Pourquoi l'ancien est conservé ?</div></div></div>
+      <div class="step-body">
+        <p>Il existe <strong>3 ReplicaSets</strong> après la mise à jour (révisions 1, 3, 4). L'ancien est conservé à 0 réplica car Kubernetes maintient un historique (<code>revisionHistoryLimit</code>=10 par défaut). Cela permet le <strong>rollback instantané</strong> : <code>kubectl rollout undo</code> réactive l'ancien ReplicaSet sans rebuild d'image.</p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-header red"><div><div class="step-number">Q6</div><div class="step-title">Quels symptômes mènent au diagnostic ? Cause racine ?</div></div></div>
+      <div class="step-body">
+        <p><strong>Symptômes :</strong> Pods en état <code>Evicted</code> dans <code>kubectl get pods</code>. <strong>Investigation :</strong> <code>kubectl describe node</code> révèle <code>low on resource: memory</code>. <strong>Cause racine :</strong> La VM VirtualBox dispose de peu de RAM ; le <code>maxSurge: 1</code> créait un Pod supplémentaire lors du rolling update, saturant la mémoire. <strong>Correction :</strong> <code>maxSurge: 0</code> + réduction des limites mémoire.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       6. DIFFICULTÉS & ENSEIGNEMENTS
+  ═══════════════════════════════════════════ -->
+  <div class="section">
+    <h2 class="section-title"><span class="icon">🎓</span> 6. Difficultés et enseignements</h2>
+    <div class="grid-2">
+      <div class="mini-card" style="border-left:4px solid #dc2626;">
+        <h4>🔴 Evictions VirtualBox</h4>
+        <p>Pression mémoire lors du rolling update → Pods expulsés. Solution : <code>maxSurge: 0</code> + limits mémoire à 32Mi.</p>
+      </div>
+      <div class="mini-card" style="border-left:4px solid #d97706;">
+        <h4>🟠 Fichier hosts Windows</h4>
+        <p>Droits administrateur requis. Alternative : <code>curl.exe -H "Host: api.k3s.local"</code> pour les tests.</p>
+      </div>
+      <div class="mini-card" style="border-left:4px solid #059669;">
+        <h4>🟢 DNS interne</h4>
+        <p><code>api-svc</code> suffit dans le même namespace. Pas d'IP à gérer — résilience automatique si un Pod change d'IP.</p>
+      </div>
+      <div class="mini-card" style="border-left:4px solid #3b5bdb;">
+        <h4>🔵 readinessProbe = clé du zero-downtime</h4>
+        <p>Sans probe, des Pods non prêts reçoivent du trafic → erreurs 502. La probe garantit la disponibilité lors des updates.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Mini-Projet 1 · DevOps 2027 · Binôme Ferid &amp; Saad · Namespace <code>feridsaad</code> · Cluster k3s 192.168.56.10</p>
+    <p style="margin-top:6px;">Généré le 18 octobre 2026 · Kubernetes v1.30 · Traefik Ingress · podinfo 6.5.4→6.6.0</p>
+  </div>
+
+</div>
+
+<script>
+  // Auto-open print dialog hint
+  document.querySelector('.btn-pdf').addEventListener('click', () => {
+    window.print();
+  });
+</script>
+</body>
+</html>
